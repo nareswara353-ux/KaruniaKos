@@ -1,0 +1,141 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn();
+    }
+
+    function getRole() {
+      let isUserRecord = exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isUserRecord ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'nareswara353@gmail.com' ||
+        request.auth.token.email == 'admin@karuniakos.com' ||
+        getRole() == 'admin'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid == request.auth.uid &&
+             data.email is string &&
+             data.role in ['admin', 'user'];
+    }
+
+    function isValidRoom(data) {
+      return data.keys().hasAll(['number', 'price', 'status']) &&
+             data.price is number && data.price > 0 &&
+             data.status in ['available', 'maintenance', 'occupied', 'pending'];
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['userUid', 'roomId', 'startDate', 'durationMonths', 'totalPrice', 'status']) &&
+             data.userUid == request.auth.uid &&
+             data.durationMonths is number && data.durationMonths > 0 &&
+             data.status in ['pending_payment', 'confirmed', 'cancelled', 'completed'];
+    }
+
+    function isValidComplaint(data) {
+      return data.keys().hasAll(['userUid', 'title', 'description', 'status']) &&
+             data.userUid == request.auth.uid &&
+             data.status in ['pending', 'in_progress', 'resolved'];
+    }
+
+    function isValidPayment(data) {
+      return data.keys().hasAll(['bookingId', 'userUid', 'amount', 'status']) &&
+             data.userUid == request.auth.uid &&
+             data.status in ['pending', 'confirmed', 'rejected'];
+    }
+
+    // --- Match Blocks ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if (isSignedIn() && isOwner(userId) && isValidUser(incoming()) && incoming().role == 'user') || isAdmin();
+      allow update: if (isSignedIn() && isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'phoneNumber', 'createdAt', 'email', 'uid', 'role'])) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidRoom(incoming());
+      allow update: if isAdmin() ||
+        (isSignedIn() && existing().status == 'available' && incoming().diff(existing()).affectedKeys().hasOnly(['status']) && incoming().status == 'pending');
+      allow delete: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isSignedIn() && (isOwner(existing().userUid) || isAdmin());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() || isAdmin();
+      allow update: if isAdmin() || (
+        isOwner(existing().userUid) && 
+        (
+          (incoming().diff(existing()).affectedKeys().hasOnly(['status']) && incoming().status == 'cancelled') ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['proofUrl']))
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /complaints/{complaintId} {
+      allow get: if isSignedIn() && (isOwner(existing().userUid) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
+      allow create: if isEmailVerified() && isValidComplaint(incoming());
+      allow update: if isAdmin() || (
+        isOwner(existing().userUid) && 
+        incoming().diff(existing()).affectedKeys().hasOnly(['description', 'title'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow get: if isSignedIn() && (isOwner(existing().userUid) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userUid == request.auth.uid || isAdmin());
+      allow create: if (isEmailVerified() && isValidPayment(incoming()) && incoming().status == 'pending') || isAdmin();
+      allow update: if (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'confirmedAt', 'rejectedAt', 'proofUrl'])) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow get, list: if isSignedIn() && (resource.data.userUid == request.auth.uid || (isAdmin() && resource.data.userUid == 'admin'));
+      allow create: if isAdmin() || (isSignedIn() && incoming().userUid == 'admin' && incoming().keys().hasAll(['title', 'message', 'read', 'createdAt']));
+      allow update: if isSignedIn() && isOwner(existing().userUid) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(existing().userUid));
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Karunia Kos",
+  "description": "Sistem manajemen kos Karunia dengan pemesanan kamar, konfirmasi pembayaran, dan keluhan penghuni.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
