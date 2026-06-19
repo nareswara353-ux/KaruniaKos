@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, addDoc, collection, updateDoc, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, updateDoc, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { Room } from '../types';
@@ -10,7 +10,7 @@ import { motion } from 'motion/react';
 import { addMonths, format, eachDayOfInterval, isValid, isSameDay } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import Swal from 'sweetalert2';
+import { showToast } from '../lib/toast';
 
 export default function BookRoom() {
   const { roomId } = useParams();
@@ -59,7 +59,7 @@ export default function BookRoom() {
       reader.readAsDataURL(file);
     } catch (err) {
       console.error(err);
-      Swal.fire('Gagal', 'Gagal mengunggah bukti pembayaran', 'error');
+      showToast('Gagal mengunggah bukti pembayaran', 'error');
     } finally {
       setProofUploading(false);
     }
@@ -74,7 +74,7 @@ export default function BookRoom() {
         if (docSnap.exists()) {
           const roomData = { id: docSnap.id, ...docSnap.data() } as Room;
           if (roomData.status !== 'available' && roomData.status !== 'occupied') {
-            Swal.fire('Mohon Maaf', 'Kamar ini sedang tidak bisa dipesan.', 'info');
+            showToast('Kamar ini sedang tidak bisa dipesan.', 'info');
             navigate('/');
             return;
           }
@@ -115,21 +115,59 @@ export default function BookRoom() {
     fetchRoom();
   }, [roomId]);
 
-  const [isBookmarked, setIsBookmarked] = useState(() => {
-      return JSON.parse(localStorage.getItem('bookmarkedRooms') || '[]').includes(roomId);
-  });
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
-  const toggleBookmark = () => {
-      let b = JSON.parse(localStorage.getItem('bookmarkedRooms') || '[]');
-      if (b.includes(roomId)) {
-           b = b.filter((id: string) => id !== roomId);
-           setIsBookmarked(false);
-      } else {
-           b.push(roomId);
-           setIsBookmarked(true);
+  // Check if room is bookmarked when component mounts or user changes
+  useEffect(() => {
+    if (!user || !roomId) return;
+    
+    const checkBookmark = async () => {
+      try {
+        const q = query(
+          collection(db, 'bookmarks'),
+          where('userId', '==', user.uid),
+          where('roomId', '==', roomId)
+        );
+        const snapshot = await getDocs(q);
+        setIsBookmarked(!snapshot.empty);
+      } catch (error) {
+        console.error('Error checking bookmark:', error);
       }
-      localStorage.setItem('bookmarkedRooms', JSON.stringify(b));
-      window.dispatchEvent(new Event('bookmarksUpdated'));
+    };
+    
+    checkBookmark();
+  }, [user, roomId]);
+
+  const toggleBookmark = async () => {
+    if (!user || !roomId || !room) return;
+    
+    try {
+      if (isBookmarked) {
+        // Remove bookmark
+        const q = query(
+          collection(db, 'bookmarks'),
+          where('userId', '==', user.uid),
+          where('roomId', '==', roomId)
+        );
+        const snapshot = await getDocs(q);
+        for (const doc of snapshot.docs) {
+          await deleteDoc(doc.ref);
+        }
+        setIsBookmarked(false);
+      } else {
+        // Add bookmark
+        await addDoc(collection(db, 'bookmarks'), {
+          userId: user.uid,
+          roomId: roomId,
+          roomNumber: room.number,
+          createdAt: new Date().toISOString()
+        });
+        setIsBookmarked(true);
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      showToast('Gagal mengubah bookmark', 'error');
+    }
   };
 
   const handleBooking = async () => {
@@ -151,7 +189,7 @@ export default function BookRoom() {
       const isOverlapping = requestedInterval.some(date => occupiedDates.some(occupied => isSameDay(date, occupied)));
       
       if (isOverlapping) {
-        Swal.fire('Jadwal Bentrok', 'Durasi dan tanggal yang Anda pilih tumpang tindih dengan pesanan penyewa lain. Silakan ubah tanggal masuk atau durasi kos.', 'warning');
+        showToast('Durasi dan tanggal yang Anda pilih tumpang tindih dengan pesanan penyewa lain. Silakan ubah tanggal masuk atau durasi kos.', 'warning');
         setSubmitting(false);
         return;
       }
@@ -187,7 +225,7 @@ export default function BookRoom() {
 
       setSuccess(true);
     } catch (error) {
-      Swal.fire('Gagal', 'Pendaftaran gagal. Silakan periksa koneksi Anda.', 'error');
+      showToast('Pendaftaran gagal. Silakan periksa koneksi Anda.', 'error');
     } finally {
       setSubmitting(false);
     }

@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc, addDoc, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Room, Booking, Complaint, Payment, User } from '../types';
+import { useAdminData } from '../hooks/useAdminData';
+import { showToast, showConfirm } from '../lib/toast';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import { useAuth } from '../lib/AuthContext';
 import { LayoutDashboard, Users, DoorOpen, CreditCard, MessageSquare, Plus, Edit2, Trash2, Check, X, FileDown, Eye, TrendingUp, LogOut, Bell, Filter, Calendar, ChevronLeft, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,26 +16,16 @@ import { ConfirmPaymentModal } from '../components/ConfirmPaymentModal';
 
 export default function AdminDashboard() {
   const { logout, user } = useAuth();
+  const { rooms, bookings, payments, complaints, users, notifications, loading } = useAdminData();
   const [activeTab, setActiveTab] = useState<'overview' | 'calendar' | 'rooms' | 'residents' | 'payments' | 'complaints' | 'notifications'>('overview');
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sendingReminders, setSendingReminders] = useState(false);
+                const [sendingReminders, setSendingReminders] = useState(false);
   const [sendingLatePaymentReminders, setSendingLatePaymentReminders] = useState(false);
 
   const [confirmingBookingId, setConfirmingBookingId] = useState<{ id: string, roomId: string } | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const showSuccessPopup = (message: string) => {
-    setSuccessMessage(message);
-    setTimeout(() => setSuccessMessage(null), 3000);
-  };
-
+  
   // Filtering States for Payments
   const [paymentFilterStatus, setPaymentFilterStatus] = useState<string>('all');
   const [paymentStartDate, setPaymentStartDate] = useState<string>('');
@@ -55,163 +48,7 @@ export default function AdminDashboard() {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    const runCleanupAndBackgroundTasks = async () => {
-      try {
-        const roomsSnap = await getDocs(collection(db, 'rooms'));
-        const fetchedRooms = roomsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
-
-        const bookingsSnap = await getDocs(collection(db, 'bookings'));
-        const fetchedBookings = bookingsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
-        
-        const today = new Date();
-        
-        for (let i = 0; i < fetchedRooms.length; i++) {
-          if (fetchedRooms[i].status === 'pending') {
-            await updateDoc(doc(db, 'rooms', fetchedRooms[i].id), { status: 'available' });
-          }
-        }
-        
-        for (let i = 0; i < fetchedBookings.length; i++) {
-          const b = fetchedBookings[i];
-          if (b.status === 'confirmed') {
-            const endDate = addMonths(new Date(b.startDate), b.durationMonths);
-            if (endDate < today) {
-              if (b.willRenew !== false) {
-                 const room = fetchedRooms.find(r => r.id === b.roomId);
-                 if (room) {
-                    // Buat pesanan baru untuk perpanjangan
-                    await addDoc(collection(db, 'bookings'), {
-                      userUid: b.userUid,
-                      roomId: b.roomId,
-                      startDate: endDate.toISOString(),
-                      durationMonths: 1,
-                      totalPrice: room.price,
-                      status: 'pending_payment',
-                      createdAt: new Date().toISOString(),
-                      willRenew: true
-                    });
-                    
-                    // Notifikasi tagihan baru
-                    await addDoc(collection(db, 'notifications'), {
-                      userUid: b.userUid,
-                      title: 'Tagihan Perpanjangan Kamar',
-                      message: `Kamar ${room.number}: Tagihan untuk bulan berikutnya telah diterbitkan. Masa sewa sebelumnya telah selesai.`,
-                      read: false,
-                      createdAt: new Date().toISOString()
-                    });
-                 }
-              }
-
-              await updateDoc(doc(db, 'bookings', b.id), { status: 'completed' });
-              
-              const hasOtherBookings = fetchedBookings.some(other => other.roomId === b.roomId && other.id !== b.id && (other.status === 'confirmed' || (b.willRenew !== false && other.status === 'pending_payment')));
-              
-              if (!hasOtherBookings) {
-                 await updateDoc(doc(db, 'rooms', b.roomId), { status: 'available' });
-              }
-            }
-          } else if (b.status === 'pending_payment') {
-            const hoursPassed = differenceInHours(today, new Date(b.createdAt));
-            if (hoursPassed > 72) {
-              await updateDoc(doc(db, 'bookings', b.id), { status: 'cancelled' });
-            }
-          }
-        }
-
-        const usersSnap = await getDocs(collection(db, 'users'));
-        const fetchedUsers = usersSnap.docs.map(doc => ({ ...doc.data() } as User));
-        const validUsers = fetchedUsers.filter(u => !u.uid.startsWith('dummy'));
-        const validUids = new Set(validUsers.map(u => u.uid));
-
-        for (const u of fetchedUsers) {
-          if (u.uid.startsWith('dummy')) {
-            try {
-              if (u.uid) {
-                await deleteDoc(doc(db, 'users', u.uid));
-              }
-            } catch (err) {}
-          }
-        }
-
-        for (const b of fetchedBookings) {
-            const isDummy = b.userUid.startsWith('dummy') || !validUids.has(b.userUid);
-            if (isDummy) {
-                try {
-                    await deleteDoc(doc(db, 'bookings', b.id));
-                } catch (err) {}
-            }
-        }
-        
-        const paymentsSnap = await getDocs(collection(db, 'payments'));
-        for (const n of paymentsSnap.docs) {
-            const p = n.data() as Payment;
-            const isDummy = p.userUid.startsWith('dummy') || !validUids.has(p.userUid);
-            if (isDummy) {
-                try {
-                    await deleteDoc(n.ref);
-                } catch(err) {}
-            }
-        }
-
-        const notificationsQ = query(collection(db, 'notifications'), where('userUid', '==', 'admin'));
-        const notificationsSnapRaw = await getDocs(notificationsQ);
-        for (const n of notificationsSnapRaw.docs) {
-            const data = n.data();
-            const isTestError = data.message && typeof data.message === 'string' && data.message.includes('SELF-TEST');
-            const isTitleDummy = data.title && typeof data.title === 'string' && data.title.includes('SELF-TEST');
-            if (isTestError || isTitleDummy) {
-                try {
-                    await deleteDoc(n.ref);
-                } catch(err) {}
-            }
-        }
-      } catch (error) {
-        console.error("Error in background tasks:", error);
-      }
-    };
-    
-    runCleanupAndBackgroundTasks();
-
-    const unsubRooms = onSnapshot(collection(db, 'rooms'), (snap) => {
-        setRooms(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room)));
-    });
-
-    const unsubBookings = onSnapshot(collection(db, 'bookings'), (snap) => {
-        setBookings(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)).filter(b => !b.userUid.startsWith('dummy')));
-    });
-
-    const unsubComplaints = onSnapshot(collection(db, 'complaints'), (snap) => {
-        setComplaints(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Complaint)));
-    });
-
-    const unsubPayments = onSnapshot(collection(db, 'payments'), (snap) => {
-        setPayments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment)).filter(p => !p.userUid.startsWith('dummy')));
-    });
-
-    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-        setUsers(snap.docs.map(doc => ({ ...doc.data() } as User)).filter(u => !u.uid.startsWith('dummy')));
-        setLoading(false);
-    });
-
-    const qNotif = query(collection(db, 'notifications'), where('userUid', '==', 'admin'));
-    const unsubNotifs = onSnapshot(qNotif, (snap) => {
-        setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    return () => {
-        active = false;
-        unsubRooms();
-        unsubBookings();
-        unsubComplaints();
-        unsubPayments();
-        unsubUsers();
-        unsubNotifs();
-    };
-  }, []);
-
+  
   const handleUpdateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRoom) return;
@@ -223,10 +60,9 @@ export default function AdminDashboard() {
         status: editingRoom.status,
         description: editingRoom.description
       });
-      setRooms(rooms.map(r => r.id === editingRoom.id ? editingRoom : r));
-      setEditingRoom(null);
+            setEditingRoom(null);
     } catch (error) {
-      Swal.fire('Gagal', 'Error updating room', 'error');
+      showToast('Error updating room', 'error');
     }
   };
 
@@ -236,7 +72,7 @@ export default function AdminDashboard() {
     const activeBooking = bookings.find(b => b.roomId === deletingRoom.id && ['confirmed', 'completed', 'pending_payment'].includes(b.status));
     
     if (activeBooking && activeBooking.status === 'confirmed') {
-        Swal.fire('Peringatan', 'Kamar sedang terisi, tidak dapat dihapus!', 'warning');
+        showToast('Kamar sedang terisi, tidak dapat dihapus!', 'warning');
         setDeletingRoom(null);
         return;
     }
@@ -252,10 +88,9 @@ export default function AdminDashboard() {
           }
       }
 
-      setRooms(rooms.filter(r => r.id !== deletingRoom.id));
-      setDeletingRoom(null);
+            setDeletingRoom(null);
     } catch (error) {
-      Swal.fire('Gagal', 'Error deleting room', 'error');
+      showToast('Error deleting room', 'error');
     }
   };
 
@@ -268,10 +103,9 @@ export default function AdminDashboard() {
         email: editingUser.email,
         role: editingUser.role
       });
-      setUsers(users.map(u => u.uid === editingUser.uid ? editingUser : u));
-      setEditingUser(null);
+            setEditingUser(null);
     } catch (error) {
-      Swal.fire('Gagal', 'Error updating user', 'error');
+      showToast('Error updating user', 'error');
     }
   };
 
@@ -319,7 +153,7 @@ export default function AdminDashboard() {
 
       setDeletingUser(null);
     } catch (error) {
-      Swal.fire('Gagal', 'Error deleting user', 'error');
+      showToast('Error deleting user', 'error');
     }
   };
 
@@ -331,9 +165,8 @@ export default function AdminDashboard() {
       setIsAddingRoom(false);
       // Refresh
       const roomsSnap = await getDocs(collection(db, 'rooms'));
-      setRooms(roomsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room)));
-    } catch (error) {
-      Swal.fire('Gagal', 'Error adding room', 'error');
+          } catch (error) {
+      showToast('Error adding room', 'error');
     }
   };
 
@@ -365,13 +198,8 @@ export default function AdminDashboard() {
           status: 'confirmed',
           confirmedAt: new Date().toISOString()
         });
-        setPayments(prev => prev.map(p => 
-          p.id === relatedPayment.id ? { ...p, status: 'confirmed', confirmedAt: new Date().toISOString() } : 
-          (otherBookings.some(ob => ob.id === p.bookingId) ? { ...p, status: 'rejected' } : p)
-        ));
-      } else {
-        setPayments(prev => prev.map(p => otherBookings.some(ob => ob.id === p.bookingId) ? { ...p, status: 'rejected' } : p));
-      }
+              } else {
+              }
       
       // Notify User in-app
       await addDoc(collection(db, 'notifications'), {
@@ -405,12 +233,10 @@ export default function AdminDashboard() {
       }
 
       // Update local state
-      setBookings(bookings.map(b => b.id === id ? { ...b, status: 'confirmed', confirmedAt: confirmDate } : (otherBookings.some(ob => ob.id === b.id) ? { ...b, status: 'cancelled' } : b)));
-      setRooms(rooms.map(r => r.id === roomId ? { ...r, status: 'occupied' } : r));
-      setConfirmingBookingId(null);
-      showSuccessPopup("Pembayaran berhasil dikonfirmasi!");
+                  setConfirmingBookingId(null);
+      showToast("Pembayaran berhasil dikonfirmasi!", 'success');
     } catch (error: any) {
-      showSuccessPopup("Gagal mengonfirmasi pesanan: " + error.message);
+      showToast("Gagal mengonfirmasi pesanan: " + error.message, 'success');
     }
   };
 
@@ -418,7 +244,7 @@ export default function AdminDashboard() {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
     if (!roomId) {
-      showSuccessPopup("Gagal: Data roomId tidak valid!");
+      showToast("Gagal: Data roomId tidak valid!", 'success');
       return;
     }
 
@@ -435,8 +261,7 @@ export default function AdminDashboard() {
       const relatedPayment = payments.find(p => p.bookingId === id && p.status === 'pending');
       if (relatedPayment) {
         await updateDoc(doc(db, 'payments', relatedPayment.id), { status: 'rejected' });
-        setPayments(prev => prev.map(p => p.id === relatedPayment.id ? { ...p, status: 'rejected' } : p));
-      }
+              }
       
       step = "updateBooking";
       await updateDoc(doc(db, 'bookings', id), { status: 'cancelled' });
@@ -453,14 +278,12 @@ export default function AdminDashboard() {
 
       step = "setState";
       // Update local state
-      setBookings(bookings.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
-      if (otherActiveBookings.length === 0) {
-        setRooms(rooms.map(r => r.id === roomId ? { ...r, status: 'available' } : r));
-      }
-      showSuccessPopup("Data berhasil dibatalkan!");
+            if (otherActiveBookings.length === 0) {
+              }
+      showToast("Data berhasil dibatalkan!", 'success');
     } catch (error: any) {
       console.error(error);
-      showSuccessPopup(`Gagal (${step}): ` + error.message);
+      showToast(`Gagal (${step}, 'success'): ` + error.message);
     }
   };
 
@@ -469,13 +292,11 @@ export default function AdminDashboard() {
       if (paymentId) {
         // Hapus payment history jika ada
         await deleteDoc(doc(db, 'payments', paymentId));
-        setPayments(prev => prev.filter(p => p.id !== paymentId));
-      }
+              }
       await deleteDoc(doc(db, 'bookings', id));
-      setBookings(prev => prev.filter(b => b.id !== id));
-      showSuccessPopup("Data berhasil dihapus!");
+            showToast("Data berhasil dihapus!", 'success');
     } catch (error: any) {
-      showSuccessPopup("Gagal menghapus data: " + error.message);
+      showToast("Gagal menghapus data: " + error.message, 'success');
     }
   };
 
@@ -499,13 +320,11 @@ export default function AdminDashboard() {
         });
       }
 
-      setBookings(prev => prev.filter(b => b.status !== 'pending_payment'));
-      setPayments(prev => prev.filter(p => !pBookings.some(pb => pb.id === p.bookingId && p.status === 'pending')));
-      
+                  
       setIsResetModalOpen(false);
-      showSuccessPopup("Data telah dihapus");
+      showToast("Data telah dihapus", 'success');
     } catch (error: any) {
-      Swal.fire('Gagal', "Gagal mereset data: " + error.message, 'error');
+      showToast("Gagal mereset data: " + error.message, 'error');
     }
   };
 
@@ -513,7 +332,7 @@ export default function AdminDashboard() {
     const booking = bookings.find(b => b.id === id);
     if (!booking) return;
     if (!roomId) {
-      showSuccessPopup("Gagal: Data roomId tidak valid!");
+      showToast("Gagal: Data roomId tidak valid!", 'success');
       return;
     }
 
@@ -537,12 +356,10 @@ export default function AdminDashboard() {
       });
 
       step = "setState";
-      setBookings(bookings.map(b => b.id === id ? { ...b, status: 'completed' } : b));
-      setRooms(rooms.map(r => r.id === roomId ? { ...r, status: 'available' } : r));
-      showSuccessPopup("Masa sewa ditandai selesai.");
+                  showToast("Masa sewa ditandai selesai.", 'success');
     } catch (error: any) {
       console.error(error);
-      showSuccessPopup(`Gagal (${step}): ` + error.message);
+      showToast(`Gagal (${step}, 'success'): ` + error.message);
     }
   };
 
@@ -563,9 +380,8 @@ export default function AdminDashboard() {
          });
       }
 
-      setComplaints(complaints.map(c => c.id === id ? { ...c, status: 'resolved', adminNote: note } : c));
-    } catch (error) {
-      Swal.fire('Gagal', "Gagal menyelesaikan keluhan", 'error');
+          } catch (error) {
+      showToast("Gagal menyelesaikan keluhan", 'error');
     }
   };
 
@@ -625,10 +441,10 @@ export default function AdminDashboard() {
           count++;
         }
       }
-      Swal.fire('Sukses', "Otomatisasi pengingat berhasil dikirim.", 'success');
+      showToast("Otomatisasi pengingat berhasil dikirim.", 'success');
     } catch (error) {
       console.error("Error sending reminders:", error);
-      Swal.fire('Gagal', "Gagal mengirim pengingat", 'error');
+      showToast("Gagal mengirim pengingat", 'error');
     } finally {
       setSendingReminders(false);
     }
@@ -657,16 +473,16 @@ export default function AdminDashboard() {
           count++;
         }
       }
-      Swal.fire('Sukses', "Berhasil mengirim notifikasi keterlambatan", 'success');
+      showToast("Berhasil mengirim notifikasi keterlambatan", 'success');
     } catch (error) {
       console.error("Error sending payment reminders:", error);
-      Swal.fire('Gagal', "Gagal mengirim pengingat pembayaran", 'error');
+      showToast("Gagal mengirim pengingat pembayaran", 'error');
     } finally {
       setSendingLatePaymentReminders(false);
     }
   };
 
-  const filteredPayments = payments.filter(p => {
+  const filteredPayments = useMemo(() => payments.filter(p => {
     let matches = true;
     if (paymentFilterStatus !== 'all' && p.status !== paymentFilterStatus) matches = false;
     if (paymentStartDate && new Date(p.createdAt) < new Date(paymentStartDate)) matches = false;
@@ -678,7 +494,7 @@ export default function AdminDashboard() {
     if (paymentMinAmount && p.amount < Number(paymentMinAmount)) matches = false;
     if (paymentMaxAmount && p.amount > Number(paymentMaxAmount)) matches = false;
     return matches;
-  });
+  }), [payments, paymentFilterStatus, paymentStartDate, paymentEndDate, paymentMinAmount, paymentMaxAmount]);
 
   if (loading) return <div className="p-8 text-center text-slate-500 font-bold uppercase tracking-widest text-xs">Mengakses Pusat Kendali...</div>;
 
@@ -776,7 +592,7 @@ export default function AdminDashboard() {
                   <p className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{rooms.length > 0 ? Math.round((rooms.filter(r => r.status === 'occupied').length / rooms.length) * 100) : 0}%</p>
                 </div>
                 <div className="card-minimal p-6 flex flex-col justify-between h-32">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none text-warning">Menunggu Bayar</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Menunggu Bayar</span>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{bookings.filter(b => b.status === 'pending_payment').length}</p>
                 </div>
               </div>
@@ -824,11 +640,15 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm font-medium">
-                      {bookings.filter(b => b.status === 'confirmed').sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5).map(b => (
-                        <tr key={b.id} className="hover:bg-slate-50/30 transition-colors">
-                          <td className="px-6 py-4 font-mono text-xs font-bold text-slate-400">#{b.id.slice(0, 8).toUpperCase()}</td>
-                          <td className="px-6 py-4 text-slate-700">{users.find(u => u.uid === b.userUid)?.displayName || `usr_${b.userUid.slice(0, 6)}`}</td>
-                          <td className="px-6 py-4 text-right font-bold text-success">Rp {b.totalPrice.toLocaleString()}</td>
+                      {payments.filter(p => p.status === 'confirmed').sort((a,b) => {
+                        const dateA = new Date(a.confirmedAt || a.createdAt).getTime();
+                        const dateB = new Date(b.confirmedAt || b.createdAt).getTime();
+                        return dateB - dateA;
+                      }).slice(0, 5).map(payment => (
+                        <tr key={payment.id} className="hover:bg-slate-50/30 transition-colors">
+                          <td className="px-6 py-4 font-mono text-xs font-bold text-slate-400">#{payment.id.slice(0, 8).toUpperCase()}</td>
+                          <td className="px-6 py-4 text-slate-700">{users.find(u => u.uid === payment.userUid)?.displayName || `usr_${payment.userUid.slice(0, 6)}`}</td>
+                          <td className="px-6 py-4 text-right font-bold text-success">Rp {payment.amount.toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1268,8 +1088,7 @@ export default function AdminDashboard() {
                    onClick={async () => {
                      // Trigger a re-fetch or visual refresh feedback
                      const complaintsSnap = await getDocs(collection(db, 'complaints'));
-                     setComplaints(complaintsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Complaint)));
-                     showSuccessPopup("Memuat ulang keluhan...");
+                                          showToast("Memuat ulang keluhan...", 'success');
                    }}
                    className="flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl transition-colors font-bold text-sm"
                  >
@@ -1309,7 +1128,7 @@ export default function AdminDashboard() {
                           {complaint.status === 'pending' && (
                             <button 
                               onClick={() => resolveComplaint(complaint.id)}
-                              className="text-xs font-bold uppercase tracking-widest bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-900 transition-all font-black tracking-widest"
+                              className="text-xs font-bold uppercase tracking-widest bg-slate-800 text-white px-4 py-2 rounded-xl hover:bg-slate-900 transition-all"
                             >
                               Tandai Selesai
                             </button>

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import { useAuth } from '../lib/AuthContext';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -19,56 +18,20 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    let loginEmail = email;
-
-    // Support typing 'admin' as email
-    if (email === 'admin') {
-      loginEmail = 'admin@karuniakos.com';
-    }
-
     try {
-      if (loginEmail === 'admin@karuniakos.com' && password === 'admin123') {
-        try {
-          await signInWithEmailAndPassword(auth, loginEmail, password);
-        } catch (err: any) {
-          if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-             try {
-               const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
-               await setDoc(doc(db, 'users', userCredential.user.uid), {
-                 uid: userCredential.user.uid,
-                 email: loginEmail,
-                 role: 'admin',
-                 displayName: 'Administrator',
-                 createdAt: new Date().toISOString()
-               });
-             } catch (createErr: any) {
-               if (createErr.code === 'auth/email-already-in-use') {
-                 // The account exists but we failed to sign in with 'admin123'.
-                 // We will attempt to sign in with 'admin 123' which was the old password.
-                 await signInWithEmailAndPassword(auth, loginEmail, 'admin 123');
-               } else {
-                 throw createErr;
-               }
-             }
-          } else {
-             throw err;
-          }
-        }
-        navigate('/admin');
-        return;
-      }
-
-      await signInWithEmailAndPassword(auth, loginEmail, password);
-      if (loginEmail === 'nareswara353@gmail.com' || loginEmail === 'admin@karuniakos.com') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      // Standard Firebase email/password authentication
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      // Navigation is handled by ProtectedRoute based on user role in Firestore
+      // The context or ProtectedRoute will redirect based on the user's role
+      navigate('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
         setError("Kredensial tidak valid. Silakan periksa kembali email dan kata sandi Anda.");
       } else if (err.code === 'auth/operation-not-allowed') {
         setError("Login dengan Email/Password belum diaktifkan. Silakan buka Firebase Console > Authentication > Sign-in method, lalu aktifkan 'Email/Password'.");
+      } else if (err.code === 'auth/user-not-found') {
+        setError("Akun tidak ditemukan. Silakan daftar terlebih dahulu.");
       } else {
         setError(err.message);
       }
@@ -81,12 +44,9 @@ export default function Login() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const email = result.user.email;
-      if (email === 'nareswara353@gmail.com' || email === 'admin@karuniakos.com') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      
+      // Navigation is handled by ProtectedRoute based on user role in Firestore
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
     }

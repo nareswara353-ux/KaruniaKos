@@ -11,24 +11,142 @@
   --color-danger: #dc2626;
   --color-warning: #ea580c;
   --color-background: #f9fafb;
+  
+  /* Variabel untuk konsistensi transisi */
+  --duration-smooth: 300ms;
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @layer base {
   body {
-    @apply bg-background text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    background-color: var(--color-background);
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  .dark body {
+    background-color: #0f172a;
+    color: #f8fafc;
+  }
+
+  /* Animasi fade-in untuk konten utama (biar tidak ngejedag) */
+  #root {
+    animation: fadeIn var(--duration-smooth) var(--ease-smooth);
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Animasi spin kustom yang lebih smooth (alternatif jika tailwind animate-spin kurang) */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 
 @layer components {
   .card-minimal {
-    @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm transition-all duration-200;
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 200ms ease;
+  }
+
+  .dark .card-minimal {
+    background-color: #0f172a;
+    border-color: #1e293b;
   }
   
   .btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors;
+    background-color: var(--color-primary);
+    color: white;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 200ms ease;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-dark);
+  }
+
+  .btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
   
   .btn-ghost {
-    @apply text-slate-600 hover:bg-slate-50 px-4 py-2 rounded-lg transition-all;
+    color: #475569;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 200ms ease;
+  }
+
+  .btn-ghost:hover {
+    background-color: #f8fafc;
+  }
+
+  .dark .btn-ghost {
+    color: #cbd5e1;
+  }
+
+  .dark .btn-ghost:hover {
+    background-color: #1f2937;
+  }
+}
+
+@layer utilities {
+  /* Utility untuk skeleton loading */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      theme('colors.slate.200') 25%,
+      theme('colors.slate.100') 50%,
+      theme('colors.slate.200') 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .dark .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      theme('colors.slate.800') 25%,
+      theme('colors.slate.700') 50%,
+      theme('colors.slate.800') 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 }

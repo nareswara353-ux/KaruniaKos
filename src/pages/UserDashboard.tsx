@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { collection, query, where, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
+import { useUserData } from '../hooks/useUserData';
+import { generateReceipt } from '../services/reportService';
+import { cancelUserBooking } from '../services/bookingService';
+import { showToast, showConfirm } from '../lib/toast';
 import { useAuth } from '../lib/AuthContext';
 import { Booking, Complaint, Payment, Notification, Room } from '../types';
 import { Calendar, MessageSquare, CreditCard, Clock, CheckCircle, AlertCircle, Send, User, Bell, LogOut, Trash2, Filter, Download, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
@@ -9,18 +13,12 @@ import { format, differenceInHours, addMonths } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import Swal from 'sweetalert2';
 
 import { QRPaymentModal } from '../components/QRPaymentModal';
 
 export default function UserDashboard() {
   const { user, profile, logout } = useAuth();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
+              const { bookings, complaints, notifications, payments, rooms, loading } = useUserData(user?.uid);
   const [activeTab, setActiveTab] = useState<'bookings' | 'complaints' | 'notifications' | 'payments' | 'rules'>('bookings');
   const [expandedBookings, setExpandedBookings] = useState<string[]>([]);
   
@@ -40,49 +38,7 @@ export default function UserDashboard() {
   const [complaintDesc, setComplaintDesc] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchData = async () => {
-      try {
-        const roomsSnap = await getDocs(collection(db, 'rooms'));
-        setRooms(roomsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room)));
-      } catch (error) {
-        console.error("Error fetching rooms", error);
-      }
-    };
-    fetchData();
-
-    // Real-time listener for bookings
-    const bookingsQ = query(collection(db, 'bookings'), where('userUid', '==', user.uid));
-    const unsubscribeBookings = onSnapshot(bookingsQ, (snapshot) => {
-      setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking)));
-      setLoading(false);
-    });
-
-    const complaintsQ = query(collection(db, 'complaints'), where('userUid', '==', user.uid));
-    const unsubscribeComplaints = onSnapshot(complaintsQ, (snapshot) => {
-      setComplaints(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Complaint)));
-    });
-
-    const notificationsQ = query(collection(db, 'notifications'), where('userUid', '==', user.uid));
-    const unsubscribeNotifications = onSnapshot(notificationsQ, (snapshot) => {
-      setNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification)));
-    });
-    
-    const paymentsQ = query(collection(db, 'payments'), where('userUid', '==', user.uid));
-    const unsubscribePayments = onSnapshot(paymentsQ, (snapshot) => {
-      setPayments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment)));
-    });
-
-    return () => {
-      unsubscribeBookings();
-      unsubscribeComplaints();
-      unsubscribeNotifications();
-      unsubscribePayments();
-    };
-  }, [user]);
-
+  
   const handleSubmitComplaint = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -90,12 +46,7 @@ export default function UserDashboard() {
     if (auth.currentUser) {
       await auth.currentUser.reload();
       if (!auth.currentUser.emailVerified) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Verifikasi Email',
-          text: 'Akun Anda belum diverifikasi. Silakan cek email Anda untuk verifikasi.',
-          confirmButtonColor: '#3b82f6'
-        });
+        showToast('Akun Anda belum diverifikasi. Silakan cek email Anda untuk verifikasi.', 'warning');
         return;
       }
     }
@@ -124,45 +75,25 @@ export default function UserDashboard() {
       // Refresh complaints
       const complaintsQ = query(collection(db, 'complaints'), where('userUid', '==', user.uid));
       const complaintsSnap = await getDocs(complaintsQ);
-      setComplaints(complaintsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Complaint)));
-    } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal',
-        text: 'Gagal mengirimkan keluhan',
-        confirmButtonColor: '#3b82f6'
-      });
+          } catch (error) {
+      showToast('Gagal mengirimkan keluhan', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteComplaint = async (id: string) => {
-    const result = await Swal.fire({
-        title: 'Hapus?',
-        text: 'Anda yakin ingin menghapus keluhan ini?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#94a3b8',
-        confirmButtonText: 'Ya, Hapus',
-        cancelButtonText: 'Batal'
-    });
-    if (!result.isConfirmed) return;
+    const isConfirmed = await showConfirm('Konfirmasi', 'Apakah Anda yakin?');
+    if (!isConfirmed) return;
     try {
       await deleteDoc(doc(db, 'complaints', id));
-      setComplaints(complaints.filter(c => c.id !== id));
+      
     } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal',
-        text: 'Gagal menghapus keluhan',
-        confirmButtonColor: '#3b82f6'
-      });
+      showToast('Gagal menghapus keluhan', 'error');
     }
   };
 
-  const filteredPayments = payments.filter(p => {
+  const filteredPayments = useMemo(() => payments.filter(p => {
     let matches = true;
     if (paymentFilterStatus !== 'all' && p.status !== paymentFilterStatus) matches = false;
     if (paymentStartDate && new Date(p.createdAt) < new Date(paymentStartDate)) matches = false;
@@ -174,38 +105,18 @@ export default function UserDashboard() {
     if (paymentMinAmount && p.amount < Number(paymentMinAmount)) matches = false;
     if (paymentMaxAmount && p.amount > Number(paymentMaxAmount)) matches = false;
     return matches;
-  });
+  }), [payments, paymentFilterStatus, paymentStartDate, paymentEndDate, paymentMinAmount, paymentMaxAmount]);
 
   const cancelBooking = async (bookingId: string) => {
-    const result = await Swal.fire({
-      title: 'Batal Pesanan?',
-      text: 'Apakah anda yakin ingin membatalkan pesanan kamar ini?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Ya, Batalkan',
-      cancelButtonText: 'Kembali'
-    });
+    const isConfirmed = await showConfirm('Batal Pesanan?', 'Apakah anda yakin ingin membatalkan pesanan kamar ini?', 'Ya, Batalkan');
     
-    if (result.isConfirmed) {
+    if (isConfirmed) {
       try {
-        await updateDoc(doc(db, 'bookings', bookingId), {
-          status: 'cancelled'
-        });
-        
-        // Find and reject associated pending payments
         const pendingPayment = payments.find(p => p.bookingId === bookingId && p.status === 'pending');
-        if (pendingPayment) {
-           await updateDoc(doc(db, 'payments', pendingPayment.id), { status: 'rejected' });
-        }
+        await cancelUserBooking(bookingId, pendingPayment?.id);
+        showToast('Pesanan dibatalkan', 'success');
       } catch (err) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal',
-          text: 'Gagal membatalkan pesanan.',
-          confirmButtonColor: '#3b82f6'
-        });
+        showToast('Gagal membatalkan pesanan.', 'error');
       }
     }
   };
@@ -216,47 +127,11 @@ export default function UserDashboard() {
         willRenew: !current
       });
     } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Gagal memperbarui preferensi sewa.',
-        confirmButtonColor: '#3b82f6'
-      });
+      showToast('Gagal memperbarui preferensi sewa.', 'error');
     }
   };
 
-  const generateReceipt = (booking: Booking, payment?: Payment) => {
-    const doc = new jsPDF();
-    const room = rooms.find(r => r.id === booking.roomId);
-    
-    doc.setFontSize(22);
-    doc.text("Kwitansi Pembayaran Karunia Kos", 14, 20);
-    
-    doc.setFontSize(12);
-    doc.text(`ID Pesanan: ${booking.id}`, 14, 35);
-    doc.text(`Tanggal Pesanan: ${format(new Date(booking.createdAt), 'dd MMM yyyy HH:mm')}`, 14, 42);
-    doc.text(`Tanggal Konfirmasi: ${booking.confirmedAt ? format(new Date(booking.confirmedAt), 'dd MMM yyyy HH:mm') : 'N/A'}`, 14, 49);
-    doc.text(`Status: LUNAS`, 14, 56);
-    
-    autoTable(doc, {
-      startY: 65,
-      head: [['Keterangan', 'Detail']],
-      body: [
-        ['Nama Penghuni', profile?.displayName || user?.email || 'N/A'],
-        ['Nomor Kamar', room ? `Kamar ${room.number}` : 'N/A'],
-        ['Durasi Sewa', `${booking.durationMonths} Bulan`],
-        ['Total Pembayaran', `Rp ${booking.totalPrice.toLocaleString()}`]
-      ]
-    });
-    
-    const finalY = (doc as any).lastAutoTable.finalY || 65;
-    doc.setFontSize(10);
-    doc.text("Terima kasih telah menggunakan layanan Karunia Kos.", 14, finalY + 15);
-    doc.text("Pusat Bantuan: 0812345789 | Email: admin@karuniakos.com", 14, finalY + 22);
-    
-    doc.save(`Kwitansi_${booking.id.slice(0, 8)}.pdf`);
-  };
-
+  
   if (loading) return <div className="p-8 text-center">Memuat dashboard...</div>;
 
   return (
@@ -431,7 +306,7 @@ export default function UserDashboard() {
                               />
                               <span className="text-xs font-bold text-slate-600">Perpanjang bulan depan</span>
                             </label>
-                            <button onClick={() => generateReceipt(booking)} className="text-sm font-bold text-slate-600 bg-slate-100 px-4 py-2 rounded-xl hover:bg-slate-200 transition-colors flex items-center space-x-1 w-full sm:w-auto justify-center">
+                            <button onClick={() => generateReceipt(booking, rooms.find(r => r.id === booking.roomId), profile?.displayName || user?.email || 'N/A')} className="text-sm font-bold text-slate-600 bg-slate-100 px-4 py-2 rounded-xl hover:bg-slate-200 transition-colors flex items-center space-x-1 w-full sm:w-auto justify-center">
                               <Download className="w-4 h-4 flex-shrink-0" />
                               <span>Download Invoice</span>
                             </button>
