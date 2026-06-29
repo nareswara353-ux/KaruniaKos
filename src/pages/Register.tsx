@@ -22,9 +22,9 @@ export default function Register() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      
+
       await updateProfile(user, { displayName: fullName });
-      
+
       // Initial Firestore profile
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
@@ -34,7 +34,7 @@ export default function Register() {
         phone: phone,
         createdAt: new Date().toISOString(),
       });
-      
+
       await sendEmailVerification(user);
       navigate('/verify-email');
     } catch (err: any) {
@@ -56,7 +56,7 @@ export default function Register() {
             <UserPlus className="text-white w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Permintaan Akses</h1>
-          <p className="text-slate-500 text-sm font-medium">Daftarkan profil Anda untuk mulai menjelajah.</p>
+          <p className="text-slate-500 text-sm font-medium">Daftarkan profil.</p>
         </div>
 
         {error && (
@@ -70,12 +70,12 @@ export default function Register() {
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Nama Lengkap</label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                required 
+              <input
+                type="text"
+                required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Andi Budiman"
+                placeholder="Masukkan Nama Lengkap"
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-primary focus:outline-none transition-all font-medium text-slate-700"
               />
             </div>
@@ -84,26 +84,26 @@ export default function Register() {
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Nomor Telepon</label>
             <div className="relative">
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
-                type="tel" 
-                required 
+              <input
+                type="tel"
+                required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="081234567890"
+                placeholder="08xxxxxxxxx"
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-primary focus:outline-none transition-all font-medium text-slate-700"
               />
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Email Akun</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Email Anda</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
-                type="email" 
-                required 
+              <input
+                type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@email.com"
+                placeholder="xxxxxx@gmail.com"
                 className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-primary focus:outline-none transition-all font-medium text-slate-700"
               />
             </div>
@@ -112,9 +112,9 @@ export default function Register() {
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Kata Sandi</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
-                type="password" 
-                required 
+              <input
+                type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 6 karakter"
@@ -122,7 +122,7 @@ export default function Register() {
               />
             </div>
           </div>
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full btn-primary py-3.5 shadow-xl shadow-blue-500/10"
