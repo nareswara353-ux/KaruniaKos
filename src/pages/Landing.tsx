@@ -69,8 +69,8 @@ export default function Landing() {
       <section className="space-y-8">
         <div className="flex justify-between items-end">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-slate-800 color-white">Fasilitas Prioritas</h2>
-            <p className="text-slate-500 color-white" >Fasilitas andalan untuk kenyamanan ekstra Anda sehari-hari.</p>
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Fasilitas Prioritas</h2>
+            <p className="text-slate-500 dark:text-white" >Fasilitas andalan untuk kenyamanan ekstra Anda sehari-hari.</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
