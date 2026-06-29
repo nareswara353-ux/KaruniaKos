@@ -46,7 +46,7 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    // --- Validation Blueprints ---
+    
 
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'role']) &&
@@ -80,7 +80,7 @@ service cloud.firestore {
              data.status in ['pending', 'confirmed', 'rejected'];
     }
 
-    // --- Match Blocks ---
+    
 
     match /users/{userId} {
       allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
