@@ -16,7 +16,7 @@ export default function Landing() {
         const q = query(collection(db, 'rooms'), where('status', '==', 'available'), limit(6));
         const querySnapshot = await getDocs(q);
         const roomsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
-        
+
         // Ensure we load rooms properly
         if (roomsData.length > 0) {
           setRooms(roomsData);
@@ -45,14 +45,14 @@ export default function Landing() {
               Pengalaman Hunian Premium
             </span>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight text-white">
-              Hunian Nyaman. <br/>
+              Hunian Nyaman. <br />
               <span className="text-primary-light">Tanpa Ribet.</span>
             </h1>
             <p className="text-base md:text-lg text-slate-300 font-medium max-w-xl">
               Tingkatkan pengalaman indekos Anda dengan manajemen minimalis Karunia Kos dan sistem pemesanan yang mulus.
             </p>
           </motion.div>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -69,8 +69,8 @@ export default function Landing() {
       <section className="space-y-8">
         <div className="flex justify-between items-end">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-slate-800">Fasilitas Prioritas</h2>
-            <p className="text-slate-500">Fasilitas andalan untuk kenyamanan ekstra Anda sehari-hari.</p>
+            <h2 className="text-3xl font-bold text-slate-800 color-white">Fasilitas Prioritas</h2>
+            <p className="text-slate-500 color-white" >Fasilitas andalan untuk kenyamanan ekstra Anda sehari-hari.</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -137,33 +137,33 @@ export default function Landing() {
                   )}
                 </div>
                 <div className="absolute top-4 right-4 flex items-center space-x-1.5 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-                   <div className={`w-2 h-2 rounded-full ${room.status === 'available' ? 'bg-emerald-500' : room.status === 'occupied' ? 'bg-blue-500' : 'bg-red-500'}`} />
-                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                     {room.status === 'available' ? 'Tersedia' : room.status === 'occupied' ? 'Terisi' : 'Perawatan'}
-                   </span>
+                  <div className={`w-2 h-2 rounded-full ${room.status === 'available' ? 'bg-emerald-500' : room.status === 'occupied' ? 'bg-blue-500' : 'bg-red-500'}`} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                    {room.status === 'available' ? 'Tersedia' : room.status === 'occupied' ? 'Terisi' : 'Perawatan'}
+                  </span>
                 </div>
                 <div className="absolute bottom-4 right-4 bg-primary text-white font-bold px-3 py-1 rounded-lg">
                   Rp {room.price.toLocaleString()}/bln
                 </div>
               </div>
-          <div className="p-6 space-y-4">
-            <div className="flex justify-between items-start">
-              <h3 className="text-lg font-bold text-slate-900">Kamar {room.number}</h3>
-              <div className="flex items-center space-x-1 text-amber-500">
-                <Star className="w-4 h-4 fill-current" />
-                <span className="text-xs font-bold">5.0</span>
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-bold text-slate-900">Kamar {room.number}</h3>
+                  <div className="flex items-center space-x-1 text-amber-500">
+                    <Star className="w-4 h-4 fill-current" />
+                    <span className="text-xs font-bold">5.0</span>
+                  </div>
+                </div>
+                <p className="text-slate-500 text-sm h-10 overflow-hidden line-clamp-2">
+                  {room.description}
+                </p>
+                <Link
+                  to={`/book/${room.id}`}
+                  className="block w-full bg-slate-900 hover:bg-slate-800 text-white text-center py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                >
+                  Pesan Kamar
+                </Link>
               </div>
-            </div>
-            <p className="text-slate-500 text-sm h-10 overflow-hidden line-clamp-2">
-              {room.description}
-            </p>
-            <Link 
-              to={`/book/${room.id}`}
-              className="block w-full bg-slate-900 hover:bg-slate-800 text-white text-center py-2.5 rounded-lg text-sm font-semibold transition-colors"
-            >
-              Pesan Kamar
-            </Link>
-          </div>
             </motion.div>
           ))}
         </div>
@@ -190,22 +190,22 @@ export default function Landing() {
               </div>
             </div>
             <div className="flex gap-2">
-               <a 
-                 href="https://wa.me/62812345789?text=Halo%20Admin%2C%20saya%20ingin%20request%20jadwal%20survey%20lokasi%20Kosan%20untuk%20tanggal%3A" 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap"
-               >
-                 Survey Lokasi
-               </a>
-               <a 
-                 href="https://wa.me/62812345789" 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap"
-               >
-                 Hubungi Pemilik
-               </a>
+              <a
+                href="https://wa.me/62812345789?text=Halo%20Admin%2C%20saya%20ingin%20request%20jadwal%20survey%20lokasi%20Kosan%20untuk%20tanggal%3A"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap"
+              >
+                Survey Lokasi
+              </a>
+              <a
+                href="https://wa.me/62812345789"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap"
+              >
+                Hubungi Pemilik
+              </a>
             </div>
           </div>
         </div>
@@ -294,8 +294,8 @@ function TestimonialSlider() {
       </AnimatePresence>
       <div className="absolute bottom-6 right-8 flex space-x-2">
         {testimonials.map((_, idx) => (
-          <button 
-            key={idx} 
+          <button
+            key={idx}
             onClick={() => setCurrent(idx)}
             className={`w-2 h-2 rounded-full transition-all ${current === idx ? 'bg-primary w-4' : 'bg-slate-600'}`}
           />
