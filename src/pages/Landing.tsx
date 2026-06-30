@@ -68,7 +68,7 @@ export default function Landing() {
       {/* Fasilitas */}
       <section className="space-y-8">
         <div className="flex justify-between items-end">
-          <div className="space-y-2" text-white>
+          <div className="space-y-2 text-white">
             <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Fasilitas Prioritas</h2>
             <p className="text-slate-500 dark:text-white" >Fasilitas andalan untuk kenyamanan ekstra Anda sehari-hari.</p>
           </div>
