@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-primary: #2563eb;
@@ -11,9 +11,7 @@
   --color-danger: #dc2626;
   --color-warning: #ea580c;
   --color-background: #f9fafb;
-  --variant-dark: .dark &;
   
-  /* Variabel untuk konsistensi transisi */
   --duration-smooth: 300ms;
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
