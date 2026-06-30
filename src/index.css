@@ -11,6 +11,7 @@
   --color-danger: #dc2626;
   --color-warning: #ea580c;
   --color-background: #f9fafb;
+  --variant-dark: .dark &;
   
   /* Variabel untuk konsistensi transisi */
   --duration-smooth: 300ms;
