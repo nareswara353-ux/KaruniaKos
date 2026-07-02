@@ -17,7 +17,6 @@ export default function Landing() {
         const querySnapshot = await getDocs(q);
         const roomsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Room));
 
-        // Ensure we load rooms properly
         if (roomsData.length > 0) {
           setRooms(roomsData);
         }
@@ -49,15 +48,14 @@ export default function Landing() {
               <span className="text-primary-light">Tanpa Ribet.</span>
             </h1>
             <p className="text-base md:text-lg text-slate-300 font-medium max-w-xl">
-              Tingkatkan pengalaman indekos Anda dengan manajemen minimalis Karunia Kos dan sistem pemesanan yang mulus.
+              Cari Kos Kos an dengan harga terjangkau? Karunia Kos jawabannya.
             </p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-wrap gap-4"
-          >
+            className="flex flex-wrap gap-4">
             <Link to="/register" className="btn-primary py-4 px-8 text-base shadow-xl shadow-blue-500/20">
               Cari Kamar Sekarang
             </Link>
@@ -83,7 +81,7 @@ export default function Landing() {
               <Coffee className="w-8 h-8" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg">Dapur Mini</h3>
+              <h3 className="font-bold text-slate-800 text-lg">Dapur</h3>
               <p className="text-slate-500 text-sm mt-1">Fasilitas memasak lebih praktis setiap saat.</p>
             </div>
           </div>
@@ -124,8 +122,7 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow group"
-            >
+              className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
               <div className="relative h-48 bg-slate-100 flex items-center justify-center border-b border-slate-50 overflow-hidden">
                 <div className="text-slate-300 text-3xl font-bold opacity-30 select-none">
                   Kamar {room.number}
@@ -163,8 +160,7 @@ export default function Landing() {
                 </p>
                 <Link
                   to={`/book/${room.id}`}
-                  className="block w-full bg-slate-900 hover:bg-slate-800 text-white text-center py-2.5 rounded-lg text-sm font-semibold transition-colors"
-                >
+                  className="block w-full bg-slate-900 hover:bg-slate-800 text-white text-center py-2.5 rounded-lg text-sm font-semibold transition-colors">
                   Pesan Kamar
                 </Link>
               </div>
@@ -198,16 +194,14 @@ export default function Landing() {
                 href="https://wa.me/62812345789?text=Halo%20Admin%2C%20saya%20ingin%20request%20jadwal%20survey%20lokasi%20Kosan%20untuk%20tanggal%3A"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap"
-              >
+                className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap">
                 Survey Lokasi
               </a>
               <a
                 href="https://wa.me/62812345789"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap"
-              >
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm whitespace-nowrap">
                 Hubungi Pemilik
               </a>
             </div>
@@ -223,7 +217,7 @@ export default function Landing() {
               <CheckCircle2 className="w-7 h-7 text-primary" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 tracking-tight">Pembayaran Mulus</h3>
-            <p className="text-slate-500 leading-relaxed text-sm">Sistem virtual account otomatis untuk konfirmasi mudah dan transaksi aman.</p>
+            <p className="text-slate-500 leading-relaxed text-sm">Sistem virtual account otomatis untuk transaksi yang lebih aman.</p>
           </div>
           <div className="space-y-4">
             <div className="bg-primary/5 w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
@@ -237,7 +231,7 @@ export default function Landing() {
               <CheckCircle2 className="w-7 h-7 text-primary" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 tracking-tight">Dashboard Pintar</h3>
-            <p className="text-slate-500 leading-relaxed text-sm">Pelacakan okupansi real-time dan laporan keuangan untuk pemilik properti.</p>
+            <p className="text-slate-500 leading-relaxed text-sm">Pelacakan tingkat hunian secara real-time.</p>
           </div>
         </div>
       </section>
@@ -258,9 +252,9 @@ export default function Landing() {
 }
 
 const testimonials = [
-  { text: "Kosan paling nyaman yang pernah saya tempati. Fasilitas lengkap dan ibu kos sangat ramah!", author: "Budi Santoso", role: "Mahasiswa" },
-  { text: "Lingkungan tenang, cocok untuk pekerja work from anywhere. Internetnya juga ngebut.", author: "Siti Rahma", role: "Freelancer" },
-  { text: "Keamanan 24 jam bikin tenang. Harganya juga sangat bersahabat untuk fasilitas mewah ini.", author: "Andi Wijaya", role: "Karyawan" }
+  { text: "Kosan paling nyaman yang pernah saya tempati. Fasilitas lengkap dan pemilik kos sangat ramah!", author: "Stefan Wijayanto", role: "Mahasiswa" },
+  { text: "Lingkungan tenang, cocok untuk pekerja work from anywhere.", author: "Siti Rahma", role: "Freelancer" },
+  { text: "Keamanan 24 jam bikin tenang. Harganya juga sangat bersahabat untuk fasilitas ini.", author: "Andi Wijaya", role: "Karyawan" }
 ];
 
 function TestimonialSlider() {

@@ -72,7 +72,7 @@ export default function UserDashboard() {
       setComplaintTitle('');
       setComplaintDesc('');
       setShowComplaintForm(false);
-      // Refresh complaints
+      
       const complaintsQ = query(collection(db, 'complaints'), where('userUid', '==', user.uid));
       const complaintsSnap = await getDocs(complaintsQ);
           } catch (error) {
@@ -160,8 +160,7 @@ export default function UserDashboard() {
               activeTab === tab.id 
                 ? 'bg-blue-50 text-primary border border-blue-100' 
                 : 'text-slate-600 hover:bg-white hover:text-slate-900 border border-transparent'
-            }`}
-          >
+            }`}>
             <tab.icon className="w-5 h-5" />
             <span>{tab.label}</span>
           </button>
@@ -187,8 +186,7 @@ export default function UserDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
-            >
+              className="space-y-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Riwayat Pesanan</h1>
               </div>
@@ -210,8 +208,7 @@ export default function UserDashboard() {
                     <motion.div 
                       layout
                       key={booking.id}
-                      className="card-minimal p-6 space-y-4 hover:border-slate-300"
-                    >
+                      className="card-minimal p-6 space-y-4 hover:border-slate-300">
                       <div className="flex justify-between items-start">
                         <div className="space-y-0.5">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kamar & Ref</span>
@@ -283,14 +280,12 @@ export default function UserDashboard() {
                           <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-3">
                             <button 
                                onClick={() => cancelBooking(booking.id)}
-                               className="bg-white border border-red-200 hover:bg-red-50 text-red-500 px-4 py-2 rounded-xl text-sm font-bold transition-colors cursor-pointer w-full sm:w-auto"
-                            >
+                               className="bg-white border border-red-200 hover:bg-red-50 text-red-500 px-4 py-2 rounded-xl text-sm font-bold transition-colors cursor-pointer w-full sm:w-auto">
                                Cancel
                             </button>
                             <button 
                                onClick={() => setQrPaymentBooking(booking)}
-                               className="bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-xl text-white font-bold text-sm transition-colors cursor-pointer w-full sm:w-auto text-center"
-                            >
+                               className="bg-emerald-500 hover:bg-emerald-600 px-4 py-2 rounded-xl text-white font-bold text-sm transition-colors cursor-pointer w-full sm:w-auto text-center">
                                Pay Now (QR)
                             </button>
                           </div>
@@ -302,8 +297,7 @@ export default function UserDashboard() {
                                 type="checkbox" 
                                 className="rounded text-primary focus:ring-primary w-4 h-4"
                                 checked={booking.willRenew !== false} // default true
-                                onChange={() => toggleAutoRenew(booking.id, booking.willRenew !== false)}
-                              />
+                                onChange={() => toggleAutoRenew(booking.id, booking.willRenew !== false)}/>
                               <span className="text-xs font-bold text-slate-600">Perpanjang bulan depan</span>
                             </label>
                             <button onClick={() => generateReceipt(booking, rooms.find(r => r.id === booking.roomId), profile?.displayName || user?.email || 'N/A')} className="text-sm font-bold text-slate-600 bg-slate-100 px-4 py-2 rounded-xl hover:bg-slate-200 transition-colors flex items-center space-x-1 w-full sm:w-auto justify-center">
@@ -315,8 +309,7 @@ export default function UserDashboard() {
                         )}
                         <button 
                           onClick={() => setExpandedBookings(prev => prev.includes(booking.id) ? prev.filter(id => id !== booking.id) : [...prev, booking.id])}
-                          className="w-full mt-4 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors py-2 border-t border-slate-50"
-                        >
+                          className="w-full mt-4 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors py-2 border-t border-slate-50">
                           {expandedBookings.includes(booking.id) ? (
                             <><ChevronUp className="w-4 h-4"/> Sembunyikan Detail</>
                           ) : (
@@ -372,8 +365,7 @@ export default function UserDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
-            >
+              className="space-y-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Riwayat Pembayaran</h1>
               </div>
@@ -384,8 +376,7 @@ export default function UserDashboard() {
                   <select 
                     value={paymentFilterStatus} 
                     onChange={e => setPaymentFilterStatus(e.target.value)}
-                    className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                  >
+                    className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
                     <option value="all">Semua Status</option>
                     <option value="confirmed">Berhasil</option>
                     <option value="pending">Menunggu Review</option>
@@ -398,8 +389,7 @@ export default function UserDashboard() {
                     type="date" 
                     value={paymentStartDate} 
                     onChange={e => setPaymentStartDate(e.target.value)}
-                    className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                  />
+                    className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
                 </div>
                 <div className="flex-1 space-y-1 w-full">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sampai Tanggal</label>
@@ -407,8 +397,7 @@ export default function UserDashboard() {
                     type="date" 
                     value={paymentEndDate} 
                     onChange={e => setPaymentEndDate(e.target.value)}
-                    className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                  />
+                    className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
                 </div>
                 <div className="flex-1 space-y-1 w-full flex gap-2">
                   <div className="w-1/2">
@@ -418,8 +407,7 @@ export default function UserDashboard() {
                       placeholder="0"
                       value={paymentMinAmount} 
                       onChange={e => setPaymentMinAmount(e.target.value)}
-                      className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                    />
+                      className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
                   </div>
                   <div className="w-1/2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Max. Harga</label>
@@ -428,8 +416,7 @@ export default function UserDashboard() {
                       placeholder="Maks"
                       value={paymentMaxAmount} 
                       onChange={e => setPaymentMaxAmount(e.target.value)}
-                      className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                    />
+                      className="w-full border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
                   </div>
                 </div>
               </div>
@@ -476,8 +463,7 @@ export default function UserDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
-            >
+              className="space-y-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Notifikasi</h1>
               </div>
@@ -515,14 +501,12 @@ export default function UserDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
-            >
+              className="space-y-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Pusat Resolusi</h1>
                 <button 
                   onClick={() => setShowComplaintForm(!showComplaintForm)}
-                  className="btn-primary flex items-center space-x-2"
-                >
+                  className="btn-primary flex items-center space-x-2">
                   <AlertCircle className="w-4 h-4" />
                   <span>Ajukan Keluhan</span>
                 </button>
@@ -535,8 +519,7 @@ export default function UserDashboard() {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   onSubmit={handleSubmitComplaint}
-                  className="bg-white rounded-3xl p-8 border-2 border-slate-100 shadow-xl space-y-6 overflow-hidden"
-                >
+                  className="bg-white rounded-3xl p-8 border-2 border-slate-100 shadow-xl space-y-6 overflow-hidden">
                   <h3 className="text-xl font-bold text-slate-800">Apa yang bisa kami bantu?</h3>
                   <div className="space-y-4">
                     <div className="space-y-1">
@@ -546,8 +529,7 @@ export default function UserDashboard() {
                         value={complaintTitle}
                         onChange={(e) => setComplaintTitle(e.target.value)}
                         placeholder="misal: Keran bocor, AC tidak dingin"
-                        className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary-dark transition-all"
-                      />
+                        className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary-dark transition-all"/>
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Deskripsi Detail</label>
@@ -557,22 +539,19 @@ export default function UserDashboard() {
                         value={complaintDesc}
                         onChange={(e) => setComplaintDesc(e.target.value)}
                         placeholder="Mohon jelaskan masalah Anda secara detail..."
-                        className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary-dark transition-all resize-none"
-                      />
+                        className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-2 focus:ring-primary-dark transition-all resize-none"/>
                     </div>
                     <div className="flex justify-end space-x-4">
                       <button 
                         type="button" 
                         onClick={() => setShowComplaintForm(false)}
-                        className="px-6 py-3 rounded-2xl text-slate-500 font-bold hover:bg-slate-100 transition-all font-bold tracking-widest text-xs uppercase"
-                      >
+                        className="px-6 py-3 rounded-2xl text-slate-500 font-bold hover:bg-slate-100 transition-all font-bold tracking-widest text-xs uppercase">
                         Batal
                       </button>
                       <button 
                         type="submit"
                         disabled={submitting}
-                        className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-lg inline-flex items-center space-x-2"
-                      >
+                        className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-lg inline-flex items-center space-x-2">
                         <Send className="w-4 h-4" />
                         <span>{submitting ? 'Mengirim...' : 'Kirim Keluhan'}</span>
                       </button>
@@ -620,8 +599,7 @@ export default function UserDashboard() {
                         <button 
                           onClick={() => handleDeleteComplaint(complaint.id)}
                           className="text-red-400 hover:text-red-600 transition-colors p-1"
-                          title="Hapus Keluhan"
-                        >
+                          title="Hapus Keluhan">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
@@ -643,8 +621,7 @@ export default function UserDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
-            >
+              className="space-y-6">
               <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Aturan Kos Eksplisit</h1>
               </div>
