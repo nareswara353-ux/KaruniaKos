@@ -52,8 +52,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          />
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"/>
 
           {/* Modal */}
           <motion.div
@@ -61,13 +60,11 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm mx-4 z-51"
-          >
+            className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm mx-4 z-51">
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
-            >
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
               <X className="w-5 h-5" />
             </button>
 
@@ -91,15 +88,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+                className="px-6 py-2.5 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 {cancelText}
               </button>
               <button
                 onClick={onConfirm}
                 disabled={isLoading}
-                className={`px-6 py-2.5 rounded-xl font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${confirmColor}`}
-              >
+                className={`px-6 py-2.5 rounded-xl font-semibold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${confirmColor}`}>
                 {isLoading ? 'Memproses...' : confirmText}
               </button>
             </div>

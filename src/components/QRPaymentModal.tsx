@@ -193,16 +193,14 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-100 flex flex-col items-center justify-end md:justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm"
-      >
+        className="fixed inset-0 z-100 flex flex-col items-center justify-end md:justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
         {isSuccess && <Confetti width={width} height={height} recycle={false} numberOfPieces={400} gravity={0.2} />}
         
         <motion.div 
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="bg-white rounded-t-3xl md:rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden mt-auto md:mt-0 max-h-[90vh] overflow-y-auto flex flex-col"
-        >
+          className="bg-white rounded-t-3xl md:rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl relative overflow-hidden mt-auto md:mt-0 max-h-[90vh] overflow-y-auto flex flex-col">
           <AnimatePresence mode="wait">
           {isSuccess ? (
             <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="text-center py-8 space-y-4">
@@ -210,16 +208,14 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"
-              >
+                className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-10 h-10 text-emerald-500" />
               </motion.div>
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Menunggu Konfirmasi!</h2>
               <p className="text-slate-500 font-medium">Pembayaran Anda telah tercatat dan sedang menunggu verifikasi dari admin.</p>
               <button 
                 onClick={onClose}
-                className="w-full mt-6 py-3.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
-              >
+                className="w-full mt-6 py-3.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors">
                 Tutup
               </button>
             </motion.div>
@@ -232,8 +228,7 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
               <p className="text-slate-500 font-medium">Sesi pembayaran telah kedaluwarsa. Silakan ulangi pembayaran.</p>
               <button 
                 onClick={onClose}
-                className="w-full mt-6 py-3.5 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-900 transition-colors"
-              >
+                className="w-full mt-6 py-3.5 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-900 transition-colors">
                 Tutup
               </button>
             </motion.div>
@@ -255,8 +250,7 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
                     onClick={() => setSelectedMethod('DANA')}
                     className={`flex-1 flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
                       selectedMethod === 'DANA' ? 'border-blue-500 bg-blue-50/50' : 'border-slate-100 hover:border-slate-200 bg-white'
-                    }`}
-                  >
+                    }`}>
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mb-2">
                       <Smartphone className="w-5 h-5 text-white" />
                     </div>
@@ -267,8 +261,7 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
                     onClick={() => setSelectedMethod('OVO')}
                     className={`flex-1 flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
                       selectedMethod === 'OVO' ? 'border-purple-500 bg-purple-50/50' : 'border-slate-100 hover:border-slate-200 bg-white'
-                    }`}
-                  >
+                    }`}>
                     <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mb-2">
                       <CreditCard className="w-5 h-5 text-white" />
                     </div>
@@ -291,13 +284,11 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="space-y-4 text-center"
-                    >
+                      className="space-y-4 text-center">
                       <motion.div 
                         animate={{ boxShadow: ['0px 0px 0px rgba(59,130,246,0)', '0px 0px 20px rgba(59,130,246,0.3)', '0px 0px 0px rgba(59,130,246,0)'] }}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 relative"
-                      >
+                        className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 relative">
                         <img src={qrCodeUrl} alt="QR Code" className="w-45 h-45" />
                       </motion.div>
                       <div className="space-y-4">
@@ -312,8 +303,7 @@ export function QRPaymentModal({ isOpen, onClose, booking }: QRPaymentModalProps
                         </div>
                         <button 
                           onClick={simulateSuccessfulPayment}
-                          className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-colors"
-                        >
+                          className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-colors">
                           Simulasi: Saya Sudah Scan QR
                         </button>
                       </div>

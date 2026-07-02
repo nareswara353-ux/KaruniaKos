@@ -43,8 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
               <button
                 onClick={this.handleRetry}
-                className="btn-primary w-full flex items-center justify-center gap-2"
-              >
+                className="btn-primary w-full flex items-center justify-center gap-2">
                 <span>🔄</span> Muat Ulang Halaman
               </button>
             </div>

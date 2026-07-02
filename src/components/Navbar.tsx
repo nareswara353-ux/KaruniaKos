@@ -128,8 +128,7 @@ export default function Navbar() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-1 text-slate-600 hover:text-red-600 transition-colors text-sm font-medium"
-                >
+                  className="flex items-center space-x-1 text-slate-600 hover:text-red-600 transition-colors text-sm font-medium">
                   <LogOut className="w-4 h-4" />
                   <span>Keluar</span>
                 </button>
@@ -156,8 +155,7 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-slate-50 border-b border-slate-200 overflow-hidden"
-          >
+            className="md:hidden bg-slate-50 border-b border-slate-200 overflow-hidden">
             <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
               <Link to="/" onClick={() => setIsOpen(false)} className="text-slate-700 hover:text-primary font-medium py-2 border-b border-slate-100">Beranda</Link>
               {user ? (
